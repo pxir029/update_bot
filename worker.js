@@ -19,7 +19,7 @@ export default {
       await sendMessage(
         env.BOT_TOKEN,
         message.chat.id,
-        `⚠️ ربات برای آپدیت کلی موقتاً خاموش هستش گل.\nلطفاً بعداً مراجعه کنید.`,
+        `⚠️ ربات برای آپدیت کلی موقتاً خاموش هستش گاو.\nلطفاً بعداً مراجعه کنید.`,
         [[{ text: '📢 اطلاع رسانی | logicSec', url: CHANNEL_URL }]]
       );
     } catch (e) {
