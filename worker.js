@@ -1,4 +1,4 @@
-const BOT_VERSION = 'v2.2.0';
+const BOT_VERSION = 'v3.1.0';
 const CHANNEL_URL = 'https://t.me/logic_sec';
 const REMOTE_SCRIPT_URL = 'https://raw.githubusercontent.com/pxir029/update_bot/refs/heads/main/worker.js';
 const OWNER_ID = '8833683786';
@@ -70,11 +70,18 @@ async function checkAndAutoUpdate(env) {
 
     // ✅ آپلود با فرمت ES Module صحیح (رفع خطای 10021)
     const formData = new FormData();
-    formData.append('script', new Blob([remoteScript], { type: 'application/javascript+module' }));
+
+    // نام فایل باید دقیقاً worker.js باشد + نوع ماژول
+    formData.append(
+      'script',
+      new Blob([remoteScript], { type: 'application/javascript+module' }),
+      'worker.js'
+    );
+
+    // metadata بدون bindings خالی
     formData.append('metadata', JSON.stringify({
       main_module: 'worker.js',
-      compatibility_date: '2024-09-01',
-      bindings: []
+      compatibility_date: '2024-09-01'
     }));
 
     const uploadRes = await fetch(
@@ -83,7 +90,7 @@ async function checkAndAutoUpdate(env) {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${env.CF_API_TOKEN}`,
-          // ⚠️ Content-Type دستی ست نشود! FormData خودش boundary می‌سازد
+          // ⚠️ Content-Type دستی ست نشود!
         },
         body: formData,
       }
@@ -91,7 +98,7 @@ async function checkAndAutoUpdate(env) {
 
     if (!uploadRes.ok) {
       const errText = await uploadRes.text();
-      return `❌ آپلود ناموفق: HTTP ${uploadRes.status}\n<code>${errText.substring(0, 300)}</code>`;
+      return `❌ آپلود ناموفق: HTTP ${uploadRes.status}\n<code>${errText.substring(0, 500)}</code>`;
     }
 
     return [
