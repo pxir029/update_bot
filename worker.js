@@ -15,13 +15,14 @@ export default {
       const userId = String(message.from?.id || '');
       const text = (message.text || '').trim();
 
-      // دستور دستی برای تست آپدیت
+      // دستور دستی آپدیت فقط برای Owner
       if (userId === OWNER_ID && text === '/update') {
         const result = await checkAndAutoUpdate(env);
         await sendMessage(env.BOT_TOKEN, message.chat.id, result);
         return new Response('OK');
       }
 
+      // پیام ثابت برای همه کاربران
       await sendMessage(
         env.BOT_TOKEN,
         message.chat.id,
@@ -38,7 +39,7 @@ export default {
 
 async function checkAndAutoUpdate(env) {
   try {
-    // ✅ FIX 1: جلوگیری از کش fetch با هدر no-cache
+    // دانلود اسکریپت ریموت بدون کش
     const remoteRes = await fetch(REMOTE_SCRIPT_URL, {
       headers: { 'Cache-Control': 'no-cache' },
       cf: { cacheTtl: 0, cacheEverything: false }
@@ -50,7 +51,7 @@ async function checkAndAutoUpdate(env) {
 
     const remoteScript = await remoteRes.text();
 
-    // ✅ FIX 2: Regex انعطاف‌پذیرتر برای استخراج نسخه
+    // استخراج نسخه از فایل ریموت
     const versionMatch = remoteScript.match(/BOT_VERSION\s*=\s*['"`]([^'"`]+)['"`]/);
     const remoteVersion = versionMatch ? versionMatch[1] : null;
 
@@ -62,21 +63,29 @@ async function checkAndAutoUpdate(env) {
       return `✅ نسخه‌ها یکسان هستند: <code>${BOT_VERSION}</code>\nنیازی به آپدیت نیست.`;
     }
 
-    // بررسی وجود متغیرهای لازم
+    // بررسی متغیرهای الزامی
     if (!env.CF_API_TOKEN || !env.CF_ACCOUNT_ID || !env.CF_WORKER_NAME) {
       return `❌ متغیرهای CF_API_TOKEN، CF_ACCOUNT_ID یا CF_WORKER_NAME تنظیم نشده‌اند.`;
     }
 
-    // ✅ FIX 3: آپلود + اضافه کردن هدر برای جلوگیری از کش شدن نسخه جدید
+    // ✅ آپلود با فرمت ES Module صحیح (رفع خطای 10021)
+    const formData = new FormData();
+    formData.append('script', new Blob([remoteScript], { type: 'application/javascript+module' }));
+    formData.append('metadata', JSON.stringify({
+      main_module: 'worker.js',
+      compatibility_date: '2024-09-01',
+      bindings: []
+    }));
+
     const uploadRes = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/workers/scripts/${env.CF_WORKER_NAME}`,
       {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${env.CF_API_TOKEN}`,
-          'Content-Type': 'application/javascript',
+          // ⚠️ Content-Type دستی ست نشود! FormData خودش boundary می‌سازد
         },
-        body: remoteScript,
+        body: formData,
       }
     );
 
