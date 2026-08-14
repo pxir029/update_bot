@@ -1,4 +1,4 @@
-const BOT_VERSION = 'v2.3.0';
+const BOT_VERSION = 'v2.2.0';
 const CHANNEL_URL = 'https://t.me/logic_sec';
 const REMOTE_SCRIPT_URL = 'https://raw.githubusercontent.com/pxir029/update_bot/refs/heads/main/worker.js';
 export default {
@@ -20,7 +20,7 @@ export default {
         env.BOT_TOKEN,
         message.chat.id,
         `⚠️ ربات برای آپدیت کلی موقتاً خاموش هستش گاو.\nلطفاً بعداً مراجعه کنید.`,
-        [[{ text: '📢 اطلاع رسانی | logicSec', url: CHANNEL_URL }]]
+        [[{ text: '📢 اطلاع رسانی | Logic', url: CHANNEL_URL }]]
       );
     } catch (e) {
       console.error(e);
@@ -32,7 +32,6 @@ export default {
 
 async function checkAndAutoUpdate(env) {
   try {
-    // 1. دانلود اسکریپت ریموت
     const remoteRes = await fetch(REMOTE_SCRIPT_URL, { cf: { cacheTtl: 0 } });
     if (!remoteRes.ok) return;
     const remoteScript = await remoteRes.text();
